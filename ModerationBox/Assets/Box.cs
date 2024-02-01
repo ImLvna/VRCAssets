@@ -10,7 +10,6 @@ using VRC.SDKBase;
 using VRC.Udon;
 
 
-[UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
 public class Box : UdonSharpBehaviour
 {
 
@@ -45,7 +44,7 @@ public class Box : UdonSharpBehaviour
 
     public void updateWall()
     {
-        if (playerList.HasPermission(Networking.LocalPlayer.playerId, PlayerRole.Role.Visitor))
+        if (playerList.HasPermission(Networking.LocalPlayer.playerId, Role.Visitor))
         {
             wall.SetActive(false);
         }
@@ -53,7 +52,7 @@ public class Box : UdonSharpBehaviour
         {
             wall.SetActive(true);
         }
-        if (!playerList.HasPermission(Networking.LocalPlayer.playerId, PlayerRole.Role.Moderator))
+        if (!playerList.HasPermission(Networking.LocalPlayer.playerId, Role.Moderator))
         {
             menu.SetActive(false);
         }
@@ -72,7 +71,7 @@ public class Box : UdonSharpBehaviour
         }
         currentPlayer = playerId;
 
-        actionsHeader.GetComponentInChildren<TextMeshProUGUI>().text = String.Format(player.displayName);
+        actionsHeader.GetComponentInChildren<TextMeshProUGUI>().text = Colored.C(player.displayName, playerList.GetPlayerColor(playerId));
     }
 
     public override void OnPlayerJoined(VRCPlayerApi player)
@@ -98,22 +97,22 @@ public class Box : UdonSharpBehaviour
     public void setPlayerVisitor()
     {
         Debug.Log(Networking.LocalPlayer.playerId);
-        playerList.SetPlayerRole(currentPlayer, PlayerRole.Role.Visitor);
+        playerList.SetPlayerRole(currentPlayer, Role.Visitor);
         onSetPlayerRole();
     }
     public void setPlayerModerator()
     {
-        playerList.SetPlayerRole(currentPlayer, PlayerRole.Role.Moderator);
+        playerList.SetPlayerRole(currentPlayer, Role.Moderator);
         onSetPlayerRole();
     }
     public void setPlayerAdmin()
     {
-        playerList.SetPlayerRole(currentPlayer, PlayerRole.Role.Admin);
+        playerList.SetPlayerRole(currentPlayer, Role.Admin);
         onSetPlayerRole();
     }
     public void setPlayerBlocked()
     {
-        playerList.SetPlayerRole(currentPlayer, PlayerRole.Role.Blocked);
+        playerList.SetPlayerRole(currentPlayer, Role.Blocked);
         onSetPlayerRole();
     }
 
@@ -148,7 +147,7 @@ public class Box : UdonSharpBehaviour
 
             playerListEntry.transform.SetParent(playerListContent.transform, false);
             playerListEntry.SetActive(true);
-            playerListEntry.GetComponentInChildren<TextMeshProUGUI>().text = ColoredText.Colored(player.displayName, playerList.GetPlayerColor(player.playerId));
+            playerListEntry.GetComponentInChildren<TextMeshProUGUI>().text = Colored.C(player.displayName, playerList.GetPlayerColor(player.playerId));
             playerListEntry.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, height);
             height -= step;
         }

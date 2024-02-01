@@ -4,9 +4,9 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.Udon;
 
-public class ColoredText : UdonSharpBehaviour
+public class Colored : UdonSharpBehaviour
 {
-    public static string Colored(string text, string color)
+    public static string C(string text, string color)
     {
         return "<color=" + color + ">" + text + "</color>";
     }

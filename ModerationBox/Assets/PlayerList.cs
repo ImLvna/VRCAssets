@@ -9,8 +9,7 @@ using VRC.Udon.Common.Interfaces;
 
 
 
-public class PlayerRole : UdonSharpBehaviour
-{
+
     public enum Role
     {
         Owner,
@@ -19,6 +18,39 @@ public class PlayerRole : UdonSharpBehaviour
         Visitor,
         Blocked
     }
+
+
+[UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
+public class PlayerList : UdonSharpBehaviour
+{
+    [SerializeField, UdonSynced]
+    private string _json;
+    private DataDictionary playerRoles;
+
+    public override void OnPreSerialization()
+    {
+        if (VRCJson.TrySerializeToJson(playerRoles, JsonExportType.Minify, out DataToken result))
+        {
+            _json = result.String;
+        }
+        else
+        {
+            Debug.LogError(result.ToString());
+        }
+    }
+
+    public override void OnDeserialization()
+    {
+        if (VRCJson.TryDeserializeFromJson(_json, out DataToken result))
+        {
+            playerRoles = result.DataDictionary;
+        }
+        else
+        {
+            Debug.LogError(result.ToString());
+        }
+    }
+
     public static DataDictionary Colors = new DataDictionary() {
         {
             (int)Role.Owner, "#FFFF00"
@@ -36,13 +68,6 @@ public class PlayerRole : UdonSharpBehaviour
             (int)Role.Blocked, "#FF0000"
         }
     };
-}
-
-[UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-public class PlayerList : UdonSharpBehaviour
-{
-    [HideInInspector]
-    public DataDictionary playerRoles;
 
     void handlePlayerJoined(VRCPlayerApi player)
     {
@@ -55,14 +80,14 @@ public class PlayerList : UdonSharpBehaviour
         {
             return;
         }
-        PlayerRole.Role role = PlayerRole.Role.Blocked;
+        Role role = Role.Blocked;
         if (player.isInstanceOwner)
         {
-            role = PlayerRole.Role.Owner;
+            role = Role.Owner;
         }
         else if (player.isMaster)
         {
-            role = PlayerRole.Role.Admin;
+            role = Role.Admin;
         }
         playerRoles.Add(player.playerId, new DataToken((int)role));
     }
@@ -93,7 +118,7 @@ public class PlayerList : UdonSharpBehaviour
 
     public override bool OnOwnershipRequest(VRCPlayerApi requester, VRCPlayerApi newOwner)
     {
-        if (HasPermission(requester.playerId, PlayerRole.Role.Moderator))
+        if (HasPermission(requester.playerId, Role.Moderator))
         {
             Networking.SetOwner(newOwner, gameObject);
             return true;
@@ -103,7 +128,7 @@ public class PlayerList : UdonSharpBehaviour
 
     public string GetPlayerColor(int playerId)
     {
-        return PlayerRole.Colors.TryGetValue((int)GetPlayerRole(playerId), out DataToken color) ? color.String : "#000000";
+        return Colors.TryGetValue((int)GetPlayerRole(playerId), out DataToken color) ? color.String : "#000000";
     }
 
     public int CompareRolesFromId(int a, int b)
@@ -115,21 +140,21 @@ public class PlayerList : UdonSharpBehaviour
         return CompareRolesFromId(a.playerId, b.playerId);
     }
 
-    public PlayerRole.Role GetPlayerRole(int playerId)
+    public Role GetPlayerRole(int playerId)
     {
         if (!playerRoles.ContainsKey(playerId))
         {
-            playerRoles.Add(playerId, new DataToken((int)PlayerRole.Role.Blocked));
+            playerRoles.Add(playerId, new DataToken((int)Role.Blocked));
         }
-        return playerRoles.TryGetValue(playerId, out DataToken role) ? (PlayerRole.Role)role.Int : PlayerRole.Role.Blocked;
+        return playerRoles.TryGetValue(playerId, out DataToken role) ? (Role)role.Int : Role.Blocked;
     }
 
-    public bool HasPermission(int playerId, PlayerRole.Role role)
+    public bool HasPermission(int playerId, Role role)
     {
         return GetPlayerRole(playerId) >= role;
     }
 
-    public void _SetPlayerRole(int playerId, PlayerRole.Role role)
+    public void _SetPlayerRole(int playerId, Role role)
     {
         if (!Networking.IsOwner(Networking.LocalPlayer, gameObject))
         {
@@ -139,9 +164,9 @@ public class PlayerList : UdonSharpBehaviour
         RequestSerialization();
     }
 
-    public void SetPlayerRole(int playerId, PlayerRole.Role role)
+    public void SetPlayerRole(int playerId, Role role)
     {
-        if (!HasPermission(Networking.LocalPlayer.playerId, PlayerRole.Role.Moderator))
+        if (!HasPermission(Networking.LocalPlayer.playerId, Role.Moderator))
         {
             return;
         }
